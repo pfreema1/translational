@@ -101,6 +101,8 @@ addEventListener('resize', function () {
   init();
 });
 
+/*****************************/
+
 // Utility Functions
 function randomIntFromRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -117,37 +119,69 @@ function distance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2));
 }
 
-// Objects
-function Object(x, y, radius, color) {
-  this.x = x;
-  this.y = y;
-  this.radius = radius;
-  this.color = color;
+/*****************************/
+// constants
+var LINE_SPACING = 15;
+var NUM_LINES = 60;
+
+/*****************************/
+
+function lineToAngle(c, x1, y1, length, angle) {
+  angle *= Math.PI / 180;
+
+  var x2 = x1 + length * Math.cos(angle);
+  var y2 = y1 + length * Math.sin(angle);
+
+  c.moveTo(x1, y1);
+  c.lineTo(x2, y2);
+
+  return { x: x2, y: y2 };
 }
 
-Object.prototype.update = function () {
+// Line
+function Line(bottomFrontCenterHeight, color) {
+  this.bottomFrontCenterHeight = bottomFrontCenterHeight;
+  this.color = color;
+  this.dx = 0.2;
+}
+
+Line.prototype.update = function () {
+  // update positions here
+
+  if (this.bottomFrontCenterHeight < canvas.height * 0.25) {
+    this.bottomFrontCenterHeight = canvas.height + 100 - LINE_SPACING;
+  }
+
+  this.bottomFrontCenterHeight -= this.dx;
   this.draw();
 };
 
-Object.prototype.draw = function () {
+Line.prototype.draw = function () {
   c.beginPath();
-  c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-  c.fillStyle = this.color;
-  c.fill();
-  c.closePath();
+
+  lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 300, -60);
+  lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 300, -150);
+
+  c.strokeStyle = this.color;
+  c.lineWidth = 2;
+  c.lineCap = 'round';
+
+  c.stroke();
 };
 
-// Implementation
-var objects = void 0;
-function init() {
-  objects = [];
+/*****************************/
 
-  for (var i = 0; i < 400; i++) {
-    var foo = new Object(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 15, 'yellow');
-    objects.push(foo);
+// Implementation
+var lines = [];
+function init() {
+  for (var i = 0; i < NUM_LINES; i++) {
+    var bottomFrontCenterHeight = canvas.height + 100 - LINE_SPACING * i;
+    console.log(bottomFrontCenterHeight);
+
+    lines.push(new Line(bottomFrontCenterHeight, 'white'));
   }
 
-  console.log(objects);
+  console.log(lines);
 }
 
 // Animation Loop
@@ -157,10 +191,9 @@ function animate() {
   c.fillStyle = 'blue';
   c.fillRect(0, 0, canvas.width, canvas.height);
 
-  objects.forEach(function (object) {
-    // console.log('wtf');
-    object.update();
-  });
+  for (var i = 0; i < lines.length; i++) {
+    lines[i].update();
+  }
 }
 
 init();
