@@ -119,13 +119,6 @@ function distance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2));
 }
 
-/*****************************/
-// constants
-var LINE_SPACING = 15;
-var NUM_LINES = 60;
-
-/*****************************/
-
 function lineToAngle(c, x1, y1, length, angle) {
   angle *= Math.PI / 180;
 
@@ -138,7 +131,17 @@ function lineToAngle(c, x1, y1, length, angle) {
   return { x: x2, y: y2 };
 }
 
-// Line
+/*****************************/
+// constants
+var LINE_SPACING = 15;
+var NUM_LINES = 30;
+
+/*****************************
+ **
+ **		Line
+ **
+ ******************************/
+
 function Line(bottomFrontCenterHeight, color) {
   this.bottomFrontCenterHeight = bottomFrontCenterHeight;
   this.color = color;
@@ -148,7 +151,7 @@ function Line(bottomFrontCenterHeight, color) {
 Line.prototype.update = function () {
   // update positions here
 
-  if (this.bottomFrontCenterHeight < canvas.height * 0.25) {
+  if (this.bottomFrontCenterHeight < canvas.height * 0.65) {
     this.bottomFrontCenterHeight = canvas.height + 100 - LINE_SPACING;
   }
 
@@ -160,7 +163,7 @@ Line.prototype.draw = function () {
   c.beginPath();
 
   lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 300, -60);
-  lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 300, -150);
+  lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 180, -150);
 
   c.strokeStyle = this.color;
   c.lineWidth = 2;
@@ -169,19 +172,57 @@ Line.prototype.draw = function () {
   c.stroke();
 };
 
+/*****************************
+ **		Mask
+ ******************************/
+function drawBottomMask() {
+  //bottom mask right
+  c.save();
+  c.translate(canvas.width / 2, canvas.height * 0.9);
+  c.rotate(-30 * Math.PI / 180);
+  c.fillStyle = 'blue';
+  c.fillRect(-250, -40, 1000, 500);
+  c.restore();
+  // bottom mast left
+  c.save();
+  c.translate(canvas.width / 2, canvas.height * 0.9);
+  c.rotate(30 * Math.PI / 180);
+  c.fillStyle = 'blue';
+  c.fillRect(-450, -40, 1000, 500);
+  c.restore();
+}
+
+function drawTopMask() {
+  var bottomFrontCenterHeight = canvas.height * 0.65;
+
+  var x1 = canvas.width / 2;
+  var y1 = bottomFrontCenterHeight;
+  var angle = -30 * Math.PI / 180;
+  var length = 700;
+
+  var x2 = x1 + length * Math.cos(angle);
+  var y2 = y1 + length * Math.sin(angle);
+
+  c.beginPath();
+
+  c.moveTo(x1, y1);
+  c.lineTo(x2, y2);
+  c.lineTo(canvas.width / 2, y2);
+
+  c.fillStyle = 'blue';
+  c.fill();
+}
+
 /*****************************/
 
 // Implementation
 var lines = [];
 function init() {
+  // create array of Line objects
   for (var i = 0; i < NUM_LINES; i++) {
     var bottomFrontCenterHeight = canvas.height + 100 - LINE_SPACING * i;
-    console.log(bottomFrontCenterHeight);
-
     lines.push(new Line(bottomFrontCenterHeight, 'white'));
   }
-
-  console.log(lines);
 }
 
 // Animation Loop
@@ -194,6 +235,9 @@ function animate() {
   for (var i = 0; i < lines.length; i++) {
     lines[i].update();
   }
+
+  drawBottomMask();
+  drawTopMask();
 }
 
 init();
