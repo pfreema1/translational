@@ -80,6 +80,11 @@ function Line(bottomFrontCenterHeight, color) {
   this.bottomFrontCenterHeight = bottomFrontCenterHeight;
   this.color = color;
   this.dx = 0.2;
+  //calculate where the topRightMaskLine intersects with each line
+  this.intersectionWithTopRightMask = {
+    x: null,
+    y: null
+  };
 }
 
 Line.prototype.update = function() {
