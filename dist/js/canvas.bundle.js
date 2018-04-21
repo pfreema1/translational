@@ -135,11 +135,20 @@ function lineToAngle(c, x1, y1, length, angle) {
 // constants
 var LINE_SPACING = 15;
 var NUM_LINES = 30;
+var bottomFrontCenterHeight = canvas.height * 0.65;
+var topRightMaskLine = {
+  point1: {
+    x: canvas.width / 2,
+    y: bottomFrontCenterHeight
+  },
+  point2: {
+    x: canvas.width / 2 + 1000 * Math.cos(-30 * Math.PI / 180),
+    y: bottomFrontCenterHeight + 1000 * Math.sin(-30 * Math.PI / 180)
+  }
+};
 
 /*****************************
- **
  **		Line
- **
  ******************************/
 
 function Line(bottomFrontCenterHeight, color) {
@@ -193,8 +202,6 @@ function drawBottomMask() {
 }
 
 function drawTopMask() {
-  var bottomFrontCenterHeight = canvas.height * 0.65;
-
   var x1 = canvas.width / 2;
   var y1 = bottomFrontCenterHeight;
   var angle = -30 * Math.PI / 180;
@@ -220,8 +227,8 @@ var lines = [];
 function init() {
   // create array of Line objects
   for (var i = 0; i < NUM_LINES; i++) {
-    var bottomFrontCenterHeight = canvas.height + 100 - LINE_SPACING * i;
-    lines.push(new Line(bottomFrontCenterHeight, 'white'));
+    var _bottomFrontCenterHeight = canvas.height + 100 - LINE_SPACING * i;
+    lines.push(new Line(_bottomFrontCenterHeight, 'white'));
   }
 }
 

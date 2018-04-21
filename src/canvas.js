@@ -60,11 +60,20 @@ function lineToAngle(c, x1, y1, length, angle) {
 // constants
 const LINE_SPACING = 15;
 const NUM_LINES = 30;
+const bottomFrontCenterHeight = canvas.height * 0.65;
+const topRightMaskLine = {
+  point1: {
+    x: canvas.width / 2,
+    y: bottomFrontCenterHeight
+  },
+  point2: {
+    x: canvas.width / 2 + 1000 * Math.cos(-30 * Math.PI / 180),
+    y: bottomFrontCenterHeight + 1000 * Math.sin(-30 * Math.PI / 180)
+  }
+};
 
 /*****************************
- **
  **		Line
- **
  ******************************/
 
 function Line(bottomFrontCenterHeight, color) {
@@ -118,8 +127,6 @@ function drawBottomMask() {
 }
 
 function drawTopMask() {
-  let bottomFrontCenterHeight = canvas.height * 0.65;
-
   let x1 = canvas.width / 2;
   let y1 = bottomFrontCenterHeight;
   let angle = -30 * Math.PI / 180;
