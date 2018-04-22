@@ -73,6 +73,8 @@
 "use strict";
 
 
+var lineIntersect = __webpack_require__(1);
+
 // Initial Setup
 var canvas = document.querySelector('canvas');
 var c = canvas.getContext('2d');
@@ -137,11 +139,11 @@ var LINE_SPACING = 15;
 var NUM_LINES = 30;
 var bottomFrontCenterHeight = canvas.height * 0.65;
 var topRightMaskLine = {
-  point1: {
+  p1: {
     x: canvas.width / 2,
     y: bottomFrontCenterHeight
   },
-  point2: {
+  p2: {
     x: canvas.width / 2 + 1000 * Math.cos(-30 * Math.PI / 180),
     y: bottomFrontCenterHeight + 1000 * Math.sin(-30 * Math.PI / 180)
   }
@@ -155,10 +157,30 @@ function Line(bottomFrontCenterHeight, color) {
   this.bottomFrontCenterHeight = bottomFrontCenterHeight;
   this.color = color;
   this.dx = 0.2;
-  //calculate where the topRightMaskLine intersects with each line
+
   this.intersectionWithTopRightMask = {
     x: null,
     y: null
+  };
+
+  this.rightLine = {
+    p1: null,
+    p2: null
+  };
+
+  this.rightLine.p1 = {
+    x: null,
+    y: null
+  };
+
+  this.rightLine.p2 = {
+    x: null,
+    y: null
+  };
+
+  this.topLine = {
+    p1: null,
+    p2: null
   };
 }
 
@@ -176,14 +198,60 @@ Line.prototype.update = function () {
 Line.prototype.draw = function () {
   c.beginPath();
 
-  lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 300, -60);
+  // set beginning points of rightLine
+  this.rightLine.p1.x = canvas.width / 2;
+  this.rightLine.p1.y = this.bottomFrontCenterHeight;
+
+  // set end points of rightLine
+  this.rightLine.p2 = lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 300, -60);
+
+  // draw left line
   lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 180, -150);
+
+  // // get point of intersection between rightLine and mask
+  // // -if there is an intersection, draw the topLine
+  // this.intersectionWithTopRightMask = this.getRightLineMaskIntersection();
+  // if (this.intersectionWithTopRightMask !== null) {
+  //   lineToAngle(
+  //     c,
+  //     this.intersectionWithTopRightMask.x,
+  //     this.intersectionWithTopRightMask.y,
+  //     600,
+  //     -150
+  //   );
+  // }
 
   c.strokeStyle = this.color;
   c.lineWidth = 2;
   c.lineCap = 'round';
 
   c.stroke();
+};
+
+Line.prototype.drawTopLine = function () {
+  // get point of intersection between rightLine and mask
+  // -if there is an intersection, draw the topLine
+  this.intersectionWithTopRightMask = this.getRightLineMaskIntersection();
+  if (this.intersectionWithTopRightMask !== null) {
+    c.beginPath();
+    lineToAngle(c, this.intersectionWithTopRightMask.x, this.intersectionWithTopRightMask.y, 180, -150);
+
+    c.strokeStyle = this.color;
+    c.lineWidth = 2;
+    c.lineCap = 'round';
+
+    c.stroke();
+  }
+};
+
+Line.prototype.getRightLineMaskIntersection = function () {
+  var foo = lineIntersect.checkIntersection(this.rightLine.p1.x, this.rightLine.p1.y, this.rightLine.p2.x, this.rightLine.p2.y, topRightMaskLine.p1.x, topRightMaskLine.p1.y, topRightMaskLine.p2.x, topRightMaskLine.p2.y);
+
+  if (foo.type === 'none') {
+    return null;
+  } else {
+    return foo.point;
+  }
 };
 
 /*****************************
@@ -207,19 +275,11 @@ function drawBottomMask() {
 }
 
 function drawTopMask() {
-  var x1 = canvas.width / 2;
-  var y1 = bottomFrontCenterHeight;
-  var angle = -30 * Math.PI / 180;
-  var length = 700;
+  // c.beginPath();
 
-  var x2 = x1 + length * Math.cos(angle);
-  var y2 = y1 + length * Math.sin(angle);
-
-  c.beginPath();
-
-  c.moveTo(x1, y1);
-  c.lineTo(x2, y2);
-  c.lineTo(canvas.width / 2, y2);
+  c.moveTo(topRightMaskLine.p1.x, topRightMaskLine.p1.y);
+  c.lineTo(topRightMaskLine.p2.x, topRightMaskLine.p2.y);
+  c.lineTo(canvas.width / 2, topRightMaskLine.p2.y);
 
   c.fillStyle = 'blue';
   c.fill();
@@ -248,12 +308,128 @@ function animate() {
     lines[i].update();
   }
 
-  drawBottomMask();
   drawTopMask();
+
+  // draw top lines
+  for (var _i = 0; _i < lines.length; _i++) {
+    lines[_i].drawTopLine();
+  }
+
+  drawBottomMask();
 }
 
 init();
 animate();
+
+/***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__check_intersection__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__colinear_point_within_segment__ = __webpack_require__(3);
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "checkIntersection", function() { return __WEBPACK_IMPORTED_MODULE_0__check_intersection__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "colinearPointWithinSegment", function() { return __WEBPACK_IMPORTED_MODULE_1__colinear_point_within_segment__["a"]; });
+
+
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = checkIntersection;
+var COLINEAR = intersectResult('colinear');
+var PARALLEL = intersectResult('parallel');
+var NONE = intersectResult('none');
+/**
+* Check how two line segments intersect eachother. Line segments are represented
+* as (x1, y1)-(x2, y2) and (x3, y3)-(x4, y4).
+*
+* @param {number} x1
+* @param {number} y1
+* @param {number} x2
+* @param {number} y2
+* @param {number} x3
+* @param {number} y3
+* @param {number} x4
+* @param {number} y4
+* @return {object} Object describing intersection that looks like
+*    {
+*      type: none|parallel|colinear|intersecting,
+*      point: {x, y} - only defined when type == intersecting
+*    }
+*/
+
+function checkIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+  var denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+  var numeA = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
+  var numeB = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3);
+
+  if (denom == 0) {
+    if (numeA == 0 && numeB == 0) {
+      return COLINEAR;
+    }
+
+    return PARALLEL;
+  }
+
+  var uA = numeA / denom;
+  var uB = numeB / denom;
+
+  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+    return intersecting({
+      x: x1 + uA * (x2 - x1),
+      y: y1 + uA * (y2 - y1)
+    });
+  }
+
+  return NONE;
+}
+
+function intersecting(point) {
+  var result = intersectResult('intersecting');
+  result.point = point;
+  return result;
+}
+
+function intersectResult(type) {
+  return {
+    type: type
+  };
+}
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = colinearPointWithinSegment;
+/**
+* Assuming a point is on same line as a line segment, tell if that point is
+* on the line segment.
+*
+* @param {number} pointX - X of point
+* @param {number} pointY - Y of point
+* @param {number} startX - X of line segment start
+* @param {number} startY - Y of line segment start
+* @param {number} endX   - X of line segment end
+* @param {number} endY   - Y of line segment end
+* @return {boolean} true if point is within segment, false otherwise.
+*/
+function colinearPointWithinSegment(pointX, pointY, startX, startY, endX, endY) {
+  if (startX != endX) {
+    if (startX <= pointX && pointX <= endX) return true;
+    if (startX >= pointX && pointX >= endX) return true;
+  } else {
+    if (startY <= pointY && pointY <= endY) return true;
+    if (startY >= pointY && pointY >= endY) return true;
+  }
+
+  return false;
+}
 
 /***/ })
 /******/ ]);

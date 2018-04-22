@@ -1,3 +1,5 @@
+const lineIntersect = require('line-intersect');
+
 // Initial Setup
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
@@ -62,11 +64,11 @@ const LINE_SPACING = 15;
 const NUM_LINES = 30;
 const bottomFrontCenterHeight = canvas.height * 0.65;
 const topRightMaskLine = {
-  point1: {
+  p1: {
     x: canvas.width / 2,
     y: bottomFrontCenterHeight
   },
-  point2: {
+  p2: {
     x: canvas.width / 2 + 1000 * Math.cos(-30 * Math.PI / 180),
     y: bottomFrontCenterHeight + 1000 * Math.sin(-30 * Math.PI / 180)
   }
@@ -80,10 +82,30 @@ function Line(bottomFrontCenterHeight, color) {
   this.bottomFrontCenterHeight = bottomFrontCenterHeight;
   this.color = color;
   this.dx = 0.2;
-  //calculate where the topRightMaskLine intersects with each line
+
   this.intersectionWithTopRightMask = {
     x: null,
     y: null
+  };
+
+  this.rightLine = {
+    p1: null,
+    p2: null
+  };
+
+  this.rightLine.p1 = {
+    x: null,
+    y: null
+  };
+
+  this.rightLine.p2 = {
+    x: null,
+    y: null
+  };
+
+  this.topLine = {
+    p1: null,
+    p2: null
   };
 }
 
@@ -101,14 +123,81 @@ Line.prototype.update = function() {
 Line.prototype.draw = function() {
   c.beginPath();
 
-  lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 300, -60);
+  // set beginning points of rightLine
+  this.rightLine.p1.x = canvas.width / 2;
+  this.rightLine.p1.y = this.bottomFrontCenterHeight;
+
+  // set end points of rightLine
+  this.rightLine.p2 = lineToAngle(
+    c,
+    canvas.width / 2,
+    this.bottomFrontCenterHeight,
+    300,
+    -60
+  );
+
+  // draw left line
   lineToAngle(c, canvas.width / 2, this.bottomFrontCenterHeight, 180, -150);
+
+  // // get point of intersection between rightLine and mask
+  // // -if there is an intersection, draw the topLine
+  // this.intersectionWithTopRightMask = this.getRightLineMaskIntersection();
+  // if (this.intersectionWithTopRightMask !== null) {
+  //   lineToAngle(
+  //     c,
+  //     this.intersectionWithTopRightMask.x,
+  //     this.intersectionWithTopRightMask.y,
+  //     600,
+  //     -150
+  //   );
+  // }
 
   c.strokeStyle = this.color;
   c.lineWidth = 2;
   c.lineCap = 'round';
 
   c.stroke();
+};
+
+Line.prototype.drawTopLine = function() {
+  // get point of intersection between rightLine and mask
+  // -if there is an intersection, draw the topLine
+  this.intersectionWithTopRightMask = this.getRightLineMaskIntersection();
+  if (this.intersectionWithTopRightMask !== null) {
+    c.beginPath();
+    lineToAngle(
+      c,
+      this.intersectionWithTopRightMask.x,
+      this.intersectionWithTopRightMask.y,
+      180,
+      -150
+    );
+
+    c.strokeStyle = this.color;
+    c.lineWidth = 2;
+    c.lineCap = 'round';
+
+    c.stroke();
+  }
+};
+
+Line.prototype.getRightLineMaskIntersection = function() {
+  let foo = lineIntersect.checkIntersection(
+    this.rightLine.p1.x,
+    this.rightLine.p1.y,
+    this.rightLine.p2.x,
+    this.rightLine.p2.y,
+    topRightMaskLine.p1.x,
+    topRightMaskLine.p1.y,
+    topRightMaskLine.p2.x,
+    topRightMaskLine.p2.y
+  );
+
+  if (foo.type === 'none') {
+    return null;
+  } else {
+    return foo.point;
+  }
 };
 
 /*****************************
@@ -132,19 +221,11 @@ function drawBottomMask() {
 }
 
 function drawTopMask() {
-  let x1 = canvas.width / 2;
-  let y1 = bottomFrontCenterHeight;
-  let angle = -30 * Math.PI / 180;
-  let length = 700;
+  // c.beginPath();
 
-  let x2 = x1 + length * Math.cos(angle);
-  let y2 = y1 + length * Math.sin(angle);
-
-  c.beginPath();
-
-  c.moveTo(x1, y1);
-  c.lineTo(x2, y2);
-  c.lineTo(canvas.width / 2, y2);
+  c.moveTo(topRightMaskLine.p1.x, topRightMaskLine.p1.y);
+  c.lineTo(topRightMaskLine.p2.x, topRightMaskLine.p2.y);
+  c.lineTo(canvas.width / 2, topRightMaskLine.p2.y);
 
   c.fillStyle = 'blue';
   c.fill();
@@ -173,8 +254,14 @@ function animate() {
     lines[i].update();
   }
 
-  drawBottomMask();
   drawTopMask();
+
+  // draw top lines
+  for (let i = 0; i < lines.length; i++) {
+    lines[i].drawTopLine();
+  }
+
+  drawBottomMask();
 }
 
 init();
